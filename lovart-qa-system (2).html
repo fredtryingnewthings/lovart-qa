@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lovart CX QA</title>
+<style>
+  :root {
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --purple-mid: #CECBF6;
+    --green: #3B6D11;
+    --green-light: #EAF3DE;
+    --red: #A32D2D;
+    --red-light: #FCEBEB;
+    --amber: #854F0B;
+    --amber-light: #FAEEDA;
+    --text: #1a1a1a;
+    --text-sec: #666;
+    --text-hint: #999;
+    --border: #e5e5e5;
+    --bg: #f7f7f5;
+    --white: #ffffff;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* Password screen */
+  .pw-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); }
+  .pw-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px 32px; width: 360px; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,0.07); }
+  .pw-logo { width: 44px; height: 44px; border-radius: 11px; background: var(--purple); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+  .pw-logo svg { width: 22px; height: 22px; fill: white; }
+  .pw-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .pw-sub { font-size: 13px; color: var(--text-sec); margin-bottom: 24px; }
+  .pw-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; color: var(--text); outline: none; text-align: center; letter-spacing: 2px; margin-bottom: 10px; background: var(--bg); }
+  .pw-input:focus { border-color: var(--purple); background: var(--white); }
+  .pw-btn { width: 100%; padding: 10px; background: var(--purple); color: white; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 10px; }
+  .pw-btn:hover { background: #4740a3; }
+  .pw-error { font-size: 12px; color: var(--red); min-height: 18px; }
+  .pw-hint { font-size: 11px; color: var(--text-hint); margin-top: 16px; }
+
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 10; }
+  .main { margin-left: 220px; flex: 1; }
+
+  .sidebar-logo { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); }
+  .logo-row { display: flex; align-items: center; gap: 9px; }
+  .logo-mark { width: 28px; height: 28px; border-radius: 7px; background: var(--purple); display: flex; align-items: center; justify-content: center; }
+  .logo-mark svg { width: 14px; height: 14px; fill: white; }
+  .logo-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .logo-sub { font-size: 11px; color: var(--text-hint); margin-top: 1px; }
+  .sidebar-nav { padding: 12px 10px; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; color: var(--text-sec); font-size: 13px; margin-bottom: 2px; transition: background 0.15s; }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--purple-light); color: var(--purple); font-weight: 500; }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .sidebar-footer { padding: 14px 18px; border-top: 1px solid var(--border); }
+  .reviewer-row { display: flex; align-items: center; gap: 8px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--purple-mid); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--purple); flex-shrink: 0; }
+  .reviewer-name { font-size: 12px; font-weight: 500; }
+  .reviewer-role { font-size: 11px; color: var(--text-hint); }
+
+  .topbar { padding: 14px 28px; border-bottom: 1px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 5; }
+  .topbar-title { font-size: 16px; font-weight: 600; }
+  .topbar-meta { font-size: 12px; color: var(--text-sec); }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-purple { background: var(--purple-light); color: var(--purple); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+
+  .page { display: none; padding: 28px; }
+  .page.active { display: block; }
+
+  .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .metric-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+  .metric-label { font-size: 11px; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+  .metric-val { font-size: 26px; font-weight: 600; line-height: 1; }
+  .metric-sub { font-size: 11px; color: var(--text-hint); margin-top: 5px; }
+  .metric-up { color: var(--green); }
+  .metric-down { color: var(--red); }
+
+  .dash-grid { display: grid; grid-template-columns: 1fr 280px; gap: 18px; }
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); }
+  .card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 13px; font-weight: 600; }
+  .card-body { padding: 18px; }
+
+  .dim-bars { display: flex; flex-direction: column; gap: 10px; }
+  .dim-bar-row { display: flex; align-items: center; gap: 10px; }
+  .dim-bar-label { font-size: 12px; color: var(--text-sec); width: 72px; flex-shrink: 0; }
+  .dim-bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; }
+  .dim-bar-fill { height: 6px; border-radius: 3px; }
+  .dim-bar-val { font-size: 12px; color: var(--text-sec); width: 36px; text-align: right; flex-shrink: 0; }
+
+  .leaderboard { display: flex; flex-direction: column; gap: 0; }
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-rank { font-size: 11px; color: var(--text-hint); width: 16px; text-align: center; }
+  .lb-av { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; flex-shrink: 0; }
+  .lb-name { font-size: 13px; flex: 1; }
+  .lb-score { font-size: 13px; font-weight: 600; }
+  .lb-trend { font-size: 11px; width: 14px; text-align: right; }
+
+  .list-toolbar { display: flex; gap: 10px; margin-bottom: 18px; align-items: center; }
+  .search-box { flex: 1; position: relative; }
+  .search-box input { width: 100%; padding: 8px 12px 8px 34px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; background: var(--white); color: var(--text); outline: none; }
+  .search-box input:focus { border-color: var(--purple); }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-hint); pointer-events: none; }
+  select { padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; background: var(--white); color: var(--text); outline: none; cursor: pointer; }
+  select:focus { border-color: var(--purple); }
+  .btn { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; font-weight: 500; border: 1px solid var(--border); background: var(--white); color: var(--text); transition: background 0.15s; }
+  .btn:hover { background: var(--bg); }
+  .btn-primary { background: var(--purple); color: white; border-color: var(--purple); }
+  .btn-primary:hover { background: #4740a3; }
+
+  .ticket-table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .ticket-table th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .ticket-table td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .ticket-table tr:last-child td { border-bottom: none; }
+  .ticket-table tr:hover td { background: #fafafa; }
+  .ticket-link { color: var(--purple); font-weight: 500; text-decoration: none; cursor: pointer; }
+  .ticket-link:hover { text-decoration: underline; }
+
+  .score-pill { display: inline-flex; align-items: center; gap: 5px; }
+  .score-track { width: 60px; height: 4px; background: var(--border); border-radius: 2px; }
+  .score-fill-bar { height: 4px; border-radius: 2px; }
+  .score-num { font-size: 12px; font-weight: 600; min-width: 24px; }
+
+  .form-layout { display: grid; grid-template-columns: 1fr 340px; gap: 18px; align-items: start; }
+  .conv-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); }
+  .conv-meta { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .conv-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; max-height: 480px; overflow-y: auto; }
+  .msg { display: flex; flex-direction: column; gap: 3px; }
+  .msg-who { font-size: 11px; color: var(--text-hint); font-weight: 500; }
+  .msg-bubble { padding: 10px 12px; border-radius: var(--radius-sm); font-size: 13px; line-height: 1.55; border: 1px solid var(--border); }
+  .msg-bubble.user { background: var(--bg); }
+  .msg-bubble.agent { background: var(--white); }
+  .msg-bubble.auto { background: #f0f4ff; border-color: #c5d0f5; font-size: 12px; color: var(--text-sec); }
+
+  .score-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); position: sticky; top: 72px; }
+  .score-card-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .score-card-body { padding: 16px; }
+
+  .redline-section { margin-bottom: 16px; padding: 12px; background: #fff8f8; border: 1px solid #f5c1c1; border-radius: var(--radius-sm); }
+  .redline-title { font-size: 11px; font-weight: 600; color: var(--red); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+  .redline-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .redline-row:last-child { margin-bottom: 0; }
+  .redline-label { font-size: 12px; color: var(--text); }
+  .toggle-wrap { display: flex; align-items: center; gap: 7px; }
+  .toggle-label { font-size: 11px; color: var(--text-sec); }
+  .toggle { width: 34px; height: 19px; border-radius: 10px; background: #d1d1d1; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .toggle.pass { background: #76c442; }
+  .toggle.fail { background: var(--red); }
+  .toggle::after { content: ''; width: 15px; height: 15px; border-radius: 50%; background: white; position: absolute; top: 2px; left: 2px; transition: left 0.2s; }
+  .toggle.pass::after, .toggle.fail::after { left: 17px; }
+
+  .dim-section { margin-bottom: 14px; }
+  .dim-section-title { font-size: 11px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px; }
+  .dim-item { margin-bottom: 10px; }
+  .dim-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+  .dim-name { font-size: 13px; font-weight: 500; }
+  .dim-weight { font-size: 11px; color: var(--text-hint); }
+  .dim-score-display { font-size: 14px; font-weight: 700; color: var(--purple); }
+  .score-btns { display: flex; gap: 3px; }
+  .score-btn { width: 36px; height: 28px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--white); font-size: 12px; cursor: pointer; color: var(--text-sec); transition: all 0.1s; font-weight: 500; }
+  .score-btn:hover { border-color: var(--purple); color: var(--purple); }
+  .score-btn.selected { background: var(--purple); color: white; border-color: var(--purple); }
+  .score-btn.sel-partial { background: var(--amber-light); color: var(--amber); border-color: #e8c07a; }
+  .deduct-reason { width: 100%; margin-top: 5px; padding: 6px 9px; font-size: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: inherit; resize: none; height: 52px; background: var(--bg); outline: none; display: none; }
+  .deduct-reason:focus { border-color: var(--purple); background: var(--white); }
+  .deduct-reason.show { display: block; }
+
+  .total-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .total-row { display: flex; align-items: center; justify-content: space-between; }
+  .total-label { font-size: 13px; font-weight: 600; }
+  .total-score { font-size: 28px; font-weight: 700; }
+  .total-pass { color: var(--green); }
+  .total-fail { color: var(--red); }
+  .total-warn { color: var(--amber); }
+  .total-max { font-size: 13px; color: var(--text-hint); font-weight: 400; }
+  .fatal-warn { margin-top: 8px; padding: 7px 10px; background: var(--red-light); border-radius: var(--radius-sm); font-size: 12px; color: var(--red); display: none; }
+  .fatal-warn.show { display: block; }
+
+  .note-area { width: 100%; margin-top: 12px; padding: 8px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: inherit; resize: none; height: 64px; background: var(--bg); outline: none; }
+  .note-area:focus { border-color: var(--purple); background: var(--white); }
+  .form-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .form-actions .btn { flex: 1; text-align: center; }
+
+  .report-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  .report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .report-table th { padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 1px solid var(--border); }
+  .report-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .report-table tr:last-child td { border-bottom: none; }
+
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-hint); font-size: 13px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .tag-pending { background: var(--amber-light); color: var(--amber); }
+  .tag-done { background: var(--green-light); color: var(--green); }
+  .tag-flagged { background: var(--red-light); color: var(--red); }
+
+  /* Detail Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: var(--radius); width: 560px; max-width: 95vw; max-height: 88vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,0.18); }
+  .modal-header { padding: 18px 20px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; position: sticky; top: 0; background: var(--white); z-index: 2; }
+  .modal-title { font-size: 15px; font-weight: 600; }
+  .modal-sub { font-size: 12px; color: var(--text-sec); margin-top: 3px; }
+  .modal-close { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-sec); flex-shrink: 0; }
+  .modal-close:hover { background: var(--border); }
+  .modal-body { padding: 18px 20px; }
+  .detail-score-hero { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: var(--radius-sm); margin-bottom: 18px; }
+  .detail-score-hero.pass { background: var(--green-light); }
+  .detail-score-hero.warn { background: var(--amber-light); }
+  .detail-score-hero.fail { background: var(--red-light); }
+  .detail-score-num { font-size: 32px; font-weight: 700; }
+  .detail-score-num.pass { color: var(--green); }
+  .detail-score-num.warn { color: var(--amber); }
+  .detail-score-num.fail { color: var(--red); }
+  .detail-meta { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+  .detail-meta-item { font-size: 12px; color: var(--text-sec); }
+  .detail-meta-item strong { color: var(--text); }
+  .detail-section-title { font-size: 11px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px; margin-top: 18px; }
+  .detail-section-title:first-child { margin-top: 0; }
+  .detail-dim-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); margin-bottom: 5px; border: 1px solid var(--border); }
+  .detail-dim-row.deducted { border-color: #f5c1c1; background: #fff8f8; }
+  .detail-dim-row.perfect { background: var(--bg); }
+  .detail-dim-left { flex: 1; }
+  .detail-dim-name { font-size: 13px; font-weight: 500; }
+  .detail-dim-reason { font-size: 12px; color: var(--red); margin-top: 4px; line-height: 1.4; }
+  .detail-dim-score { font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .detail-dim-score.full { color: var(--green); }
+  .detail-dim-score.partial { color: var(--amber); }
+  .detail-dim-score.zero { color: var(--red); }
+  .detail-redline-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: var(--radius-sm); margin-bottom: 5px; font-size: 13px; }
+  .detail-redline-row.triggered { background: var(--red-light); color: var(--red); font-weight: 500; }
+  .detail-redline-row.ok { background: var(--green-light); color: var(--green); }
+  .detail-note-box { padding: 10px 12px; background: var(--bg); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-sec); line-height: 1.5; border: 1px solid var(--border); margin-top: 6px; }
+  .detail-group { padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 10px; }
+  .detail-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .detail-group-label { font-size: 12px; font-weight: 600; color: var(--text-sec); }
+  .detail-group-score { font-size: 13px; font-weight: 700; }
+
+  @media (max-width: 900px) {
+    .sidebar { width: 60px; }
+    .sidebar-logo, .sidebar-footer, .nav-item span { display: none; }
+    .main { margin-left: 60px; }
+    .nav-item { justify-content: center; }
+    .metrics-grid { grid-template-columns: repeat(2,1fr); }
+    .dash-grid, .form-layout { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Password Screen -->
+<div class="pw-screen" id="pw-screen">
+  <div class="pw-card">
+    <div class="pw-logo">
+      <svg viewBox="0 0 16 16"><path d="M8 1l2 5h5l-4 3 1.5 5L8 11l-4.5 3L5 9 1 6h5z"/></svg>
+    </div>
+    <div class="pw-title">Lovart CX QA</div>
+    <div class="pw-sub">请输入访问密码</div>
+    <input class="pw-input" type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button class="pw-btn" onclick="checkPassword()">进入系统</button>
+    <div class="pw-error" id="pw-error"></div>
+    <div class="pw-hint">如忘记密码，请联系 QA 负责人</div>
+  </div>
+</div>
+
+<div class="shell" id="main-shell" style="display:none;">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-row">
+        <div class="logo-mark">
+          <svg viewBox="0 0 16 16"><path d="M8 1l2 5h5l-4 3 1.5 5L8 11l-4.5 3L5 9 1 6h5z"/></svg>
+        </div>
+        <div>
+          <div class="logo-name">Lovart QA</div>
+          <div class="logo-sub">CX Quality Center</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('dashboard', this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+        <span>数据看板</span>
+      </div>
+      <div class="nav-item" onclick="showPage('tickets', this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M4 6h8M4 9h5"/></svg>
+        <span>Ticket 列表</span>
+      </div>
+      <div class="nav-item" onclick="showPage('form', this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8l3 3 7-7"/><circle cx="8" cy="8" r="7"/></svg>
+        <span>开始评审</span>
+      </div>
+      <div class="nav-item" onclick="showPage('reports', this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/></svg>
+        <span>团队报告</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="reviewer-row">
+        <div class="avatar">QA</div>
+        <div>
+          <div class="reviewer-name">评审员</div>
+          <div class="reviewer-role">QA Reviewer</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div id="page-dashboard" class="page active">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">数据看板</div>
+          <div class="topbar-meta">本周数据</div>
+        </div>
+        <span class="badge badge-purple">本周进行中</span>
+      </div>
+      <div style="padding: 24px;">
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">团队平均分</div>
+            <div class="metric-val" id="dash-avg">—</div>
+            <div class="metric-sub">本周已评审</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">已完成评审</div>
+            <div class="metric-val" id="dash-done">0</div>
+            <div class="metric-sub" id="dash-done-sub">共 0 条</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">红线触发</div>
+            <div class="metric-val metric-down" id="dash-fatal">0</div>
+            <div class="metric-sub">本周</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">最高分客服</div>
+            <div class="metric-val" style="font-size:18px;" id="dash-top">—</div>
+            <div class="metric-sub" id="dash-top-score">暂无数据</div>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">各维度平均得分率</span>
+            </div>
+            <div class="card-body">
+              <div class="dim-bars" id="dim-bars-chart">
+                <div style="color:var(--text-hint);font-size:13px;text-align:center;padding:20px 0;">评审数据将在这里显示</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">客服排名</span>
+            </div>
+            <div class="card-body" style="padding:10px 18px;">
+              <div class="leaderboard" id="leaderboard">
+                <div style="color:var(--text-hint);font-size:13px;text-align:center;padding:20px 0;">暂无数据</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-tickets" class="page">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">Ticket 列表</div>
+          <div class="topbar-meta" id="tickets-meta">共 0 条</div>
+        </div>
+        <button class="btn btn-primary" onclick="showPage('form', document.querySelector('.nav-item:nth-child(3)'))">+ 新建评审</button>
+      </div>
+      <div style="padding: 24px;">
+        <div class="list-toolbar">
+          <div class="search-box">
+            <span class="search-icon">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+            </span>
+            <input type="text" placeholder="搜索 Ticket ID、客服姓名…" oninput="filterTickets(this.value)" id="search-input">
+          </div>
+          <select onchange="filterByStatus(this.value)">
+            <option value="">全部状态</option>
+            <option value="待评审">待评审</option>
+            <option value="已完成">已完成</option>
+            <option value="红线触发">红线触发</option>
+          </select>
+          <select onchange="filterByAgent(this.value)" id="agent-filter">
+            <option value="">全部客服</option>
+          </select>
+        </div>
+        <table class="ticket-table">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>客服</th>
+              <th>评审员</th>
+              <th>状态</th>
+              <th>总分</th>
+              <th>日期</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="ticket-tbody">
+            <tr><td colspan="7" class="empty-state">暂无评审记录，点击「新建评审」开始</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="page-form" class="page">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">评审工单</div>
+          <div class="topbar-meta" id="form-ticket-meta">填写工单信息后开始评分</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="badge badge-purple" id="form-score-badge">未打分</span>
+        </div>
+      </div>
+      <div style="padding: 24px;">
+
+        <div class="card" style="margin-bottom:18px;">
+          <div class="card-body" style="padding:16px;">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+              <div>
+                <label style="font-size:11px;color:var(--text-sec);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Ticket ID</label>
+                <input type="text" id="f-ticket-id" placeholder="如 #100182485" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--text);outline:none;background:var(--white);">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text-sec);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">客服姓名</label>
+                <input type="text" id="f-agent" placeholder="如 Even 燕怡文" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--text);outline:none;background:var(--white);">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text-sec);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Ticket 链接</label>
+                <input type="text" id="f-link" placeholder="Intercom 对话链接" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--text);outline:none;background:var(--white);">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-layout">
+          <div class="conv-card">
+            <div class="conv-meta">
+              <span class="badge badge-purple">对话内容</span>
+              <span style="font-size:12px;color:var(--text-hint);">从 Intercom 粘贴或手动记录</span>
+            </div>
+            <div class="conv-body" id="conv-body">
+              <div class="msg">
+                <div class="msg-who">🤖 自动回复</div>
+                <div class="msg-bubble auto">感谢联系 Lovart！我们已收到您的请求，将在 2 个工作日内回复。</div>
+              </div>
+              <div style="color:var(--text-hint);font-size:12px;text-align:center;padding:16px 0;">
+                在右侧完成打分即可，对话内容仅供参考。<br>可通过 Ticket 链接直接在 Intercom 查看完整对话。
+              </div>
+            </div>
+            <div style="padding:12px 16px;border-top:1px solid var(--border);">
+              <input type="text" id="conv-note" placeholder="记录关键对话摘要（可选）…" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text);outline:none;background:var(--bg);">
+            </div>
+          </div>
+
+          <div class="score-card">
+            <div class="score-card-header">
+              <div style="font-size:13px;font-weight:600;">评分表</div>
+            </div>
+            <div class="score-card-body">
+
+              <div class="redline-section">
+                <div class="redline-title">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 10.5a1 1 0 110-2 1 1 0 010 2zm.75-4.25a.75.75 0 01-1.5 0V5a.75.75 0 011.5 0v2.25z"/></svg>
+                  红线（触发即不合格）
+                </div>
+                <div class="redline-row">
+                  <span class="redline-label">账户验证</span>
+                  <div class="toggle-wrap">
+                    <span class="toggle-label" id="lbl-acct">未操作</span>
+                    <div class="toggle" id="tog-acct" onclick="toggleRedline('acct')"></div>
+                  </div>
+                </div>
+                <div class="redline-row">
+                  <span class="redline-label">风控审查</span>
+                  <div class="toggle-wrap">
+                    <span class="toggle-label" id="lbl-risk">未操作</span>
+                    <div class="toggle" id="tog-risk" onclick="toggleRedline('risk')"></div>
+                  </div>
+                </div>
+                <div class="redline-row">
+                  <span class="redline-label">静默关单</span>
+                  <div class="toggle-wrap">
+                    <span class="toggle-label" id="lbl-silent">未触发</span>
+                    <div class="toggle" id="tog-silent" onclick="toggleRedline('silent')"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="dim-section">
+                <div class="dim-section-title">业务准确 · 35分</div>
+                <div class="dim-item">
+                  <div class="dim-header">
+                    <span class="dim-name">诉求识别</span>
+                    <span class="dim-score-display" id="sc-disp-demand">—</span>
+                  </div>
+                  <div class="score-btns" id="sc-demand">
+                    <button class="score-btn" onclick="setScore('demand',0,this)">0</button>
+                    <button class="score-btn" onclick="setScore('demand',5,this)">5</button>
+                    <button class="score-btn" onclick="setScore('demand',10,this)">10</button>
+                    <button class="score-btn" onclick="setScore('demand',15,this)">15</button>
+                    <button class="score-btn" onclick="setScore('demand',20,this)">20</button>
+                  </div>
+                  <textarea class="deduct-reason" id="reason-demand" placeholder="扣分原因（0或5分时请说明）…" oninput="saveReason('demand',this.value)"></textarea>
+                </div>
+                <div class="dim-item">
+                  <div class="dim-header">
+                    <span class="dim-name">解决方案</span>
+                    <span class="dim-score-display" id="sc-disp-solution">—</span>
+                  </div>
+                  <div class="score-btns" id="sc-solution">
+                    <button class="score-btn" onclick="setScore('solution',0,this)">0</button>
+                    <button class="score-btn" onclick="setScore('solution',5,this)">5</button>
+                    <button class="score-btn" onclick="setScore('solution',10,this)">10</button>
+                    <button class="score-btn" onclick="setScore('solution',15,this)">15</button>
+                  </div>
+                  <textarea class="deduct-reason" id="reason-solution" placeholder="扣分原因…" oninput="saveReason('solution',this.value)"></textarea>
+                </div>
+              </div>
+
+              <div class="dim-section">
+                <div class="dim-section-title">邮件结构 · 30分</div>
+                <div class="dim-item">
+                  <div class="dim-header">
+                    <span class="dim-name">话术使用</span>
+                    <span class="dim-score-display" id="sc-disp-script">—</span>
+                  </div>
+                  <div class="score-btns" id="sc-script">
+                    <button class="score-btn" onclick="setScore('script',0,this)">0</button>
+                    <button class="score-btn" onclick="setScore('script',5,this)">5</button>
+                    <button class="score-btn" onclick="setScore('script',10,this)">10</button>
+                  </div>
+                  <textarea class="deduct-reason" id="reason-script" placeholder="扣分原因…" oninput="saveReason('script',this.value)"></textarea>
+                </div>
+                <div class="dim-item">
+                  <div class="dim-header">
+                    <span class="dim-name">情绪响应</span>
+                    <span class="dim-score-display" id="sc-disp-empathy">—</span>
+                  </div>
+                  <div class="score-btns" id="sc-empathy">
+                    <button class="score-btn" onclick="setScore('empathy',0,this)">0</button>
+                    <button class="score-btn" onclick="setScore('empathy',5,this)">5</button>
+                    <button class="score-btn" onclick="setScore('empathy',10,this)">10</button>
+                  </div>
+                  <textarea class="deduct-reason" id="reason-empathy" placeholder="扣分原因…" oninput="saveReason('empathy',this.value)"></textarea>
+                </div>
+                <div class="dim-item">
+                  <div class="dim-header">
+                    <span class="dim-name">结构闭环</span>
+                    <span class="dim-score-display" id="sc-disp-structure">—</span>
+                  </div>
+                  <div class="score-btns" id="sc-structure">
+                    <button class="score-btn" onclick="setScore('structure',0,this)">0</button>
+                    <button class="score-btn" onclick="setScore('structure',5,this)">5</button>
+                    <button class="score-btn" onclick="setScore('structure',10,this)">10</button>
+                  </div>
+                  <textarea class="deduct-reason" id="reason-structure" placeholder="扣分原因…" oninput="saveReason('structure',this.value)"></textarea>
+                </div>
+              </div>
+
+              <div class="dim-section">
+                <div class="dim-section-title">语言规范 · 20分</div>
+                <div class="dim-item">
+                  <div class="dim-header">
+                    <span class="dim-name">英文文案</span>
+                    <span class="dim-score-display" id="sc-disp-english">—</span>
+                  </div>
+                  <div class="score-btns" id="sc-english">
+                    <button class="score-btn" onclick="setScore('english',0,this)">0</button>
+                    <button class="score-btn" onclick="setScore('english',5,this)">5</button>
+                    <button class="score-btn" onclick="setScore('english',10,this)">10</button>
+                  </div>
+                  <textarea class="deduct-reason" id="reason-english" placeholder="扣分原因…" oninput="saveReason('english',this.value)"></textarea>
+                </div>
+                <div class="dim-item">
+                  <div class="dim-header">
+                    <span class="dim-name">内容排版</span>
+                    <span class="dim-score-display" id="sc-disp-format">—</span>
+                  </div>
+                  <div class="score-btns" id="sc-format">
+                    <button class="score-btn" onclick="setScore('format',0,this)">0</button>
+                    <button class="score-btn" onclick="setScore('format',5,this)">5</button>
+                    <button class="score-btn" onclick="setScore('format',10,this)">10</button>
+                  </div>
+                  <textarea class="deduct-reason" id="reason-format" placeholder="扣分原因…" oninput="saveReason('format',this.value)"></textarea>
+                </div>
+              </div>
+
+              <div class="dim-section">
+                <div class="dim-section-title">工具合规 · 15分</div>
+                <div class="dim-item">
+                  <div class="dim-header">
+                    <span class="dim-name">工单管理</span>
+                    <span class="dim-score-display" id="sc-disp-ticket">—</span>
+                  </div>
+                  <div class="score-btns" id="sc-ticket">
+                    <button class="score-btn" onclick="setScore('ticket',0,this)">0</button>
+                    <button class="score-btn" onclick="setScore('ticket',5,this)">5</button>
+                    <button class="score-btn" onclick="setScore('ticket',8,this)">8</button>
+                    <button class="score-btn" onclick="setScore('ticket',10,this)">10</button>
+                  </div>
+                  <textarea class="deduct-reason" id="reason-ticket" placeholder="扣分原因…" oninput="saveReason('ticket',this.value)"></textarea>
+                </div>
+                <div class="dim-item">
+                  <div class="dim-header">
+                    <span class="dim-name">内容合规</span>
+                    <span class="dim-score-display" id="sc-disp-compliance">—</span>
+                  </div>
+                  <div class="score-btns" id="sc-compliance">
+                    <button class="score-btn" onclick="setScore('compliance',0,this)">0</button>
+                    <button class="score-btn" onclick="setScore('compliance',5,this)">5</button>
+                  </div>
+                  <textarea class="deduct-reason" id="reason-compliance" placeholder="扣分原因…" oninput="saveReason('compliance',this.value)"></textarea>
+                </div>
+              </div>
+
+              <div class="total-section">
+                <div class="total-row">
+                  <span class="total-label">综合得分</span>
+                  <div>
+                    <span class="total-score" id="total-score-display">—</span>
+                    <span class="total-max"> / 100</span>
+                  </div>
+                </div>
+                <div class="fatal-warn" id="fatal-warn">⚠️ 红线触发 — 本工单记为不合格</div>
+              </div>
+
+              <textarea class="note-area" id="form-note" placeholder="总体评审备注（可选）…"></textarea>
+              <div class="form-actions">
+                <button class="btn" onclick="saveDraft()">存草稿</button>
+                <button class="btn btn-primary" onclick="submitReview()">提交评审 →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-reports" class="page">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">团队报告</div>
+          <div class="topbar-meta">全部评审数据汇总</div>
+        </div>
+        <button class="btn" onclick="exportCSV()">导出 CSV ↓</button>
+      </div>
+      <div style="padding:24px;">
+        <div class="report-grid">
+          <div class="card">
+            <div class="card-header"><span class="card-title">客服得分汇总</span></div>
+            <div class="card-body" style="padding:0;">
+              <table class="report-table">
+                <thead><tr><th>客服</th><th>评审数</th><th>平均分</th><th>红线次数</th><th>趋势</th></tr></thead>
+                <tbody id="report-agents"><tr><td colspan="5" class="empty-state">暂无数据</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">维度得分率</span></div>
+            <div class="card-body">
+              <div class="dim-bars" id="report-dims">
+                <div class="empty-state">暂无数据</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:18px;">
+          <div class="card-header"><span class="card-title">所有评审记录</span></div>
+          <div class="card-body" style="padding:0;">
+            <table class="report-table">
+              <thead><tr><th>Ticket ID</th><th>客服</th><th>评审员</th><th>总分</th><th>业务准确</th><th>邮件结构</th><th>语言规范</th><th>工具合规</th><th>红线</th><th>日期</th></tr></thead>
+              <tbody id="report-all"><tr><td colspan="10" class="empty-state">暂无评审记录</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- /main-shell -->
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detail-modal" onclick="closeModal(event)">
+  <div class="modal" id="modal-inner">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">评审详情</div>
+        <div class="modal-sub" id="modal-sub"></div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('detail-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+let scores = {};
+let reasons = {};
+const DIMS = ['demand','solution','script','empathy','structure','english','format','ticket','compliance'];
+const DIM_MAX = { demand:20, solution:15, script:10, empathy:10, structure:10, english:10, format:10, ticket:10, compliance:5 };
+
+const KEY = 'lovart_qa_records';
+function loadRecords() { try { return JSON.parse(localStorage.getItem(KEY)||'[]'); } catch(e){return[];} }
+function saveRecords(r) { localStorage.setItem(KEY, JSON.stringify(r)); }
+
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'tickets') renderTickets();
+  if (name === 'reports') renderReports();
+}
+
+const redlineState = { acct: false, risk: false, silent: false };
+const redlineLabels = {
+  acct: ['已验证账户','未验证 — 红线'],
+  risk: ['已进行风控审查','未风控 — 红线'],
+  silent: ['未触发静默关单','静默关单 — 红线']
+};
+
+function toggleRedline(key) {
+  redlineState[key] = !redlineState[key];
+  const tog = document.getElementById('tog-'+key);
+  const lbl = document.getElementById('lbl-'+key);
+  if (redlineState[key]) {
+    tog.className = 'toggle fail';
+    lbl.textContent = redlineLabels[key][1];
+    lbl.style.color = 'var(--red)';
+  } else {
+    tog.className = 'toggle pass';
+    lbl.textContent = redlineLabels[key][0];
+    lbl.style.color = 'var(--green)';
+  }
+  updateTotal();
+}
+
+function setScore(dim, val, btn) {
+  scores[dim] = val;
+  const max = DIM_MAX[dim];
+  document.querySelectorAll('#sc-'+dim+' .score-btn').forEach(b => {
+    b.className = 'score-btn';
+    if (parseInt(b.textContent) === val) {
+      b.className = val < max ? 'score-btn sel-partial' : 'score-btn selected';
+    }
+  });
+  document.getElementById('sc-disp-'+dim).textContent = val + '/' + max;
+  const ra = document.getElementById('reason-'+dim);
+  ra.className = (val < max) ? 'deduct-reason show' : 'deduct-reason';
+  updateTotal();
+}
+
+function saveReason(dim, val) { reasons[dim] = val; }
+
+function updateTotal() {
+  const hasFatal = Object.values(redlineState).some(v => v);
+  const total = DIMS.reduce((sum, d) => sum + (scores[d] || 0), 0);
+  const disp = document.getElementById('total-score-display');
+  const badge = document.getElementById('form-score-badge');
+  const warn = document.getElementById('fatal-warn');
+
+  if (hasFatal) {
+    disp.textContent = '不合格';
+    disp.className = 'total-score total-fail';
+    badge.textContent = '红线触发';
+    badge.className = 'badge badge-red';
+    warn.className = 'fatal-warn show';
+  } else {
+    disp.textContent = total;
+    disp.className = total >= 80 ? 'total-score total-pass' : total >= 60 ? 'total-score total-warn' : 'total-score total-fail';
+    badge.textContent = total + ' 分';
+    badge.className = total >= 80 ? 'badge badge-green' : total >= 60 ? 'badge badge-amber' : 'badge badge-red';
+    warn.className = 'fatal-warn';
+  }
+}
+
+function submitReview() {
+  const ticketId = document.getElementById('f-ticket-id').value.trim();
+  const agent = document.getElementById('f-agent').value.trim();
+  if (!ticketId || !agent) { alert('请填写 Ticket ID 和客服姓名'); return; }
+
+  const allScored = DIMS.every(d => scores[d] !== undefined);
+  if (!allScored) { alert('请完成所有维度打分'); return; }
+
+  const hasFatal = Object.values(redlineState).some(v => v);
+  const total = hasFatal ? 0 : DIMS.reduce((sum, d) => sum + (scores[d] || 0), 0);
+
+  const record = {
+    id: ticketId,
+    agent,
+    link: document.getElementById('f-link').value.trim(),
+    reviewer: '评审员',
+    date: new Date().toLocaleDateString('zh-CN'),
+    total,
+    hasFatal,
+    redlines: { ...redlineState },
+    scores: { ...scores },
+    reasons: { ...reasons },
+    note: document.getElementById('form-note').value,
+    convNote: document.getElementById('conv-note').value,
+    status: hasFatal ? '红线触发' : '已完成',
+    demand: (scores.demand||0) + (scores.solution||0),
+    structure: (scores.script||0) + (scores.empathy||0) + (scores.structure||0),
+    language: (scores.english||0) + (scores.format||0),
+    tools: (scores.ticket||0) + (scores.compliance||0)
+  };
+
+  const records = loadRecords();
+  records.unshift(record);
+  saveRecords(records);
+
+  alert('✅ 评审已提交！Ticket ' + ticketId + ' — ' + (hasFatal ? '红线触发，记为不合格' : total + ' 分'));
+  resetForm();
+  showPage('tickets', document.querySelector('.nav-item:nth-child(2)'));
+}
+
+function saveDraft() {
+  alert('草稿功能：当前填写已保存在浏览器中，刷新不会丢失。');
+}
+
+function resetForm() {
+  scores = {}; reasons = {};
+  ['acct','risk','silent'].forEach(k => { redlineState[k] = false; });
+  document.getElementById('f-ticket-id').value = '';
+  document.getElementById('f-agent').value = '';
+  document.getElementById('f-link').value = '';
+  document.getElementById('form-note').value = '';
+  document.getElementById('conv-note').value = '';
+  DIMS.forEach(d => {
+    document.querySelectorAll('#sc-'+d+' .score-btn').forEach(b => b.className = 'score-btn');
+    document.getElementById('sc-disp-'+d).textContent = '—';
+    const ra = document.getElementById('reason-'+d);
+    ra.value = ''; ra.className = 'deduct-reason';
+  });
+  ['acct','risk','silent'].forEach(k => {
+    document.getElementById('tog-'+k).className = 'toggle';
+    document.getElementById('lbl-'+k).textContent = k === 'silent' ? '未触发' : '未操作';
+    document.getElementById('lbl-'+k).style.color = '';
+  });
+  updateTotal();
+  document.getElementById('total-score-display').textContent = '—';
+  document.getElementById('total-score-display').className = 'total-score';
+  document.getElementById('form-score-badge').textContent = '未打分';
+  document.getElementById('form-score-badge').className = 'badge badge-purple';
+}
+
+let filterStatus = '', filterAgent = '', filterSearch = '';
+
+function renderTickets() {
+  const records = loadRecords();
+  document.getElementById('tickets-meta').textContent = '共 ' + records.length + ' 条';
+
+  const agents = [...new Set(records.map(r => r.agent))];
+  const sel = document.getElementById('agent-filter');
+  sel.innerHTML = '<option value="">全部客服</option>';
+  agents.forEach(a => sel.innerHTML += `<option value="${a}">${a}</option>`);
+
+  renderFilteredTickets();
+}
+
+function renderFilteredTickets() {
+  let records = loadRecords();
+  if (filterStatus) records = records.filter(r => r.status === filterStatus);
+  if (filterAgent) records = records.filter(r => r.agent === filterAgent);
+  if (filterSearch) records = records.filter(r => r.id.includes(filterSearch) || r.agent.includes(filterSearch));
+
+  const tbody = document.getElementById('ticket-tbody');
+  if (!records.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无记录</td></tr>';
+    return;
+  }
+  tbody.innerHTML = records.map(r => {
+    const scoreColor = r.hasFatal ? '#A32D2D' : r.total >= 80 ? '#3B6D11' : r.total >= 60 ? '#854F0B' : '#A32D2D';
+    const fillPct = r.hasFatal ? 100 : r.total;
+    const fillColor = r.hasFatal ? '#A32D2D' : r.total >= 80 ? '#76c442' : r.total >= 60 ? '#EF9F27' : '#E24B4A';
+    return `<tr>
+      <td><a class="ticket-link" href="${r.link||'#'}" target="_blank">${r.id}</a></td>
+      <td>${r.agent}</td>
+      <td>${r.reviewer}</td>
+      <td><span class="tag ${r.status==='已完成'?'tag-done':r.status==='红线触发'?'tag-flagged':'tag-pending'}">${r.status}</span></td>
+      <td><div class="score-pill">
+        <div class="score-track"><div class="score-fill-bar" style="width:${fillPct}%;background:${fillColor};"></div></div>
+        <span class="score-num" style="color:${scoreColor}">${r.hasFatal?'—':r.total}</span>
+      </div></td>
+      <td style="color:var(--text-sec)">${r.date}</td>
+      <td><button class="btn" style="padding:4px 10px;font-size:12px;" onclick="viewRecord('${r.id}')">查看</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTickets(v) { filterSearch = v; renderFilteredTickets(); }
+function filterByStatus(v) { filterStatus = v; renderFilteredTickets(); }
+function filterByAgent(v) { filterAgent = v; renderFilteredTickets(); }
+
+function closeModal(e) {
+  if (e.target === document.getElementById('detail-modal')) {
+    document.getElementById('detail-modal').classList.remove('open');
+  }
+}
+
+function viewRecord(id) {
+  const r = loadRecords().find(x => x.id === id);
+  if (!r) return;
+
+  const heroClass = r.hasFatal ? 'fail' : r.total >= 80 ? 'pass' : r.total >= 60 ? 'warn' : 'fail';
+  const scoreClass = heroClass;
+
+  document.getElementById('modal-title').textContent = 'Ticket ' + r.id;
+  document.getElementById('modal-sub').textContent = '客服：' + r.agent + '  ·  评审员：' + r.reviewer + '  ·  ' + r.date;
+
+  // Red line section
+  const rlNames = { acct: '账户验证', risk: '风控审查', silent: '静默关单' };
+  const rlRows = Object.entries(r.redlines || {}).map(([k, triggered]) =>
+    `<div class="detail-redline-row ${triggered ? 'triggered' : 'ok'}">
+      ${triggered ? '⚠️' : '✓'} ${rlNames[k]} — ${triggered ? '触发红线' : '正常'}
+    </div>`
+  ).join('');
+
+  // Dimension groups
+  const groups = [
+    {
+      label: '业务准确', max: 35,
+      score: (r.scores?.demand||0) + (r.scores?.solution||0),
+      dims: [
+        { key: 'demand', name: '诉求识别', max: 20 },
+        { key: 'solution', name: '解决方案', max: 15 }
+      ]
+    },
+    {
+      label: '邮件结构', max: 30,
+      score: (r.scores?.script||0) + (r.scores?.empathy||0) + (r.scores?.structure||0),
+      dims: [
+        { key: 'script', name: '话术使用', max: 10 },
+        { key: 'empathy', name: '情绪响应', max: 10 },
+        { key: 'structure', name: '结构闭环', max: 10 }
+      ]
+    },
+    {
+      label: '语言规范', max: 20,
+      score: (r.scores?.english||0) + (r.scores?.format||0),
+      dims: [
+        { key: 'english', name: '英文文案', max: 10 },
+        { key: 'format', name: '内容排版', max: 10 }
+      ]
+    },
+    {
+      label: '工具合规', max: 15,
+      score: (r.scores?.ticket||0) + (r.scores?.compliance||0),
+      dims: [
+        { key: 'ticket', name: '工单管理', max: 10 },
+        { key: 'compliance', name: '内容合规', max: 5 }
+      ]
+    }
+  ];
+
+  const groupsHTML = groups.map(g => {
+    const gc = g.score === g.max ? 'var(--green)' : g.score >= g.max * 0.6 ? 'var(--amber)' : 'var(--red)';
+    const dimsHTML = g.dims.map(d => {
+      const sc = r.scores?.[d.key] ?? 0;
+      const reason = r.reasons?.[d.key] || '';
+      const isDeducted = sc < d.max;
+      const isZero = sc === 0;
+      const dimScoreClass = isZero ? 'zero' : isDeducted ? 'partial' : 'full';
+      return `<div class="detail-dim-row ${isDeducted ? 'deducted' : 'perfect'}">
+        <div class="detail-dim-left">
+          <div class="detail-dim-name">${d.name}</div>
+          ${isDeducted && reason ? `<div class="detail-dim-reason">↳ ${reason}</div>` : ''}
+          ${isDeducted && !reason ? `<div class="detail-dim-reason" style="color:var(--text-hint);">↳ 未填写扣分原因</div>` : ''}
+        </div>
+        <div class="detail-dim-score ${dimScoreClass}">${sc}<span style="font-size:11px;font-weight:400;color:var(--text-hint);">/${d.max}</span></div>
+      </div>`;
+    }).join('');
+
+    return `<div class="detail-group">
+      <div class="detail-group-header">
+        <span class="detail-group-label">${g.label}</span>
+        <span class="detail-group-score" style="color:${gc}">${g.score} / ${g.max}</span>
+      </div>
+      ${dimsHTML}
+    </div>`;
+  }).join('');
+
+  const noteHTML = r.note
+    ? `<div class="detail-section-title">评审备注</div><div class="detail-note-box">${r.note}</div>`
+    : '';
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="detail-score-hero ${heroClass}">
+      <div>
+        <div style="font-size:12px;font-weight:600;margin-bottom:4px;opacity:0.7">综合得分</div>
+        <div class="detail-score-num ${scoreClass}">${r.hasFatal ? '不合格' : r.total + ' 分'}</div>
+      </div>
+      <span class="tag ${r.status==='已完成'?'tag-done':r.status==='红线触发'?'tag-flagged':'tag-pending'}" style="font-size:12px;padding:4px 10px;">${r.status}</span>
+    </div>
+
+    <div class="detail-section-title">红线检查</div>
+    ${rlRows}
+
+    <div class="detail-section-title" style="margin-top:16px;">评分明细</div>
+    ${groupsHTML}
+    ${noteHTML}
+  `;
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+const DIM_LABELS = { demand:'诉求识别', solution:'解决方案', script:'话术使用', empathy:'情绪响应', structure:'结构闭环', english:'英文文案', format:'内容排版', ticket:'工单管理', compliance:'内容合规' };
+
+function renderDashboard() {
+  const records = loadRecords().filter(r => !r.hasFatal);
+
+  document.getElementById('dash-done').textContent = loadRecords().length;
+  document.getElementById('dash-done-sub').textContent = '共 ' + loadRecords().length + ' 条评审';
+  document.getElementById('dash-fatal').textContent = loadRecords().filter(r => r.hasFatal).length;
+
+  if (!records.length) { document.getElementById('dash-avg').textContent = '—'; return; }
+
+  const avg = Math.round(records.reduce((s,r) => s+r.total, 0) / records.length);
+  document.getElementById('dash-avg').textContent = avg;
+
+  const byAgent = {};
+  records.forEach(r => {
+    if (!byAgent[r.agent]) byAgent[r.agent] = [];
+    byAgent[r.agent].push(r.total);
+  });
+  const ranked = Object.entries(byAgent).map(([name, scores]) => ({
+    name, avg: Math.round(scores.reduce((a,b)=>a+b,0)/scores.length), count: scores.length
+  })).sort((a,b) => b.avg - a.avg);
+
+  if (ranked.length) {
+    document.getElementById('dash-top').textContent = ranked[0].name;
+    document.getElementById('dash-top-score').textContent = '平均 ' + ranked[0].avg + ' 分';
+  }
+
+  const colors = ['#EEEDFE','#E1F5EE','#FAEEDA','#FCEBEB','#E6F1FB'];
+  const textColors = ['#3C3489','#085041','#633806','#791F1F','#0C447C'];
+  document.getElementById('leaderboard').innerHTML = ranked.slice(0,6).map((r,i) => `
+    <div class="lb-row">
+      <span class="lb-rank">${i+1}</span>
+      <div class="lb-av" style="background:${colors[i%5]};color:${textColors[i%5]}">${r.name.slice(0,2)}</div>
+      <span class="lb-name">${r.name}</span>
+      <span class="lb-score">${r.avg}</span>
+      <span class="lb-trend" style="color:${r.avg>=80?'var(--green)':r.avg>=60?'var(--amber)':'var(--red)'}">${r.avg>=80?'↑':'↓'}</span>
+    </div>`).join('');
+
+  const dimAvgs = {};
+  DIMS.forEach(d => {
+    const vals = records.filter(r => r.scores && r.scores[d] !== undefined).map(r => r.scores[d]);
+    if (vals.length) dimAvgs[d] = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+  });
+
+  document.getElementById('dim-bars-chart').innerHTML = Object.entries(dimAvgs).map(([d, av]) => {
+    const pct = Math.round(av / DIM_MAX[d] * 100);
+    const color = pct >= 80 ? '#76c442' : pct >= 60 ? '#EF9F27' : '#E24B4A';
+    return `<div class="dim-bar-row">
+      <span class="dim-bar-label">${DIM_LABELS[d]}</span>
+      <div class="dim-bar-track"><div class="dim-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+      <span class="dim-bar-val">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+function renderReports() {
+  const all = loadRecords();
+  if (!all.length) return;
+
+  const byAgent = {};
+  all.forEach(r => {
+    if (!byAgent[r.agent]) byAgent[r.agent] = { total: 0, count: 0, fatal: 0 };
+    byAgent[r.agent].count++;
+    if (r.hasFatal) byAgent[r.agent].fatal++;
+    else byAgent[r.agent].total += r.total;
+  });
+
+  document.getElementById('report-agents').innerHTML = Object.entries(byAgent).map(([name, d]) => {
+    const validCount = d.count - d.fatal;
+    const avg = validCount ? Math.round(d.total / validCount) : '—';
+    const trend = avg >= 80 ? '↑' : avg >= 60 ? '→' : '↓';
+    const tc = avg >= 80 ? 'var(--green)' : avg >= 60 ? 'var(--amber)' : 'var(--red)';
+    return `<tr><td>${name}</td><td>${d.count}</td><td style="font-weight:600;color:${tc}">${avg}</td><td>${d.fatal}</td><td style="color:${tc}">${trend}</td></tr>`;
+  }).join('');
+
+  const valid = all.filter(r => !r.hasFatal && r.scores);
+  const dimAvgs = {};
+  DIMS.forEach(d => {
+    const vals = valid.filter(r => r.scores[d] !== undefined).map(r => r.scores[d]);
+    if (vals.length) dimAvgs[d] = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+  });
+
+  document.getElementById('report-dims').innerHTML = Object.entries(dimAvgs).map(([d, av]) => {
+    const pct = Math.round(av / DIM_MAX[d] * 100);
+    const color = pct >= 80 ? '#76c442' : pct >= 60 ? '#EF9F27' : '#E24B4A';
+    return `<div class="dim-bar-row">
+      <span class="dim-bar-label">${DIM_LABELS[d]}</span>
+      <div class="dim-bar-track"><div class="dim-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+      <span class="dim-bar-val">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('report-all').innerHTML = all.map(r =>
+    `<tr>
+      <td>${r.link ? `<a href="${r.link}" target="_blank" style="color:var(--purple)">${r.id}</a>` : r.id}</td>
+      <td>${r.agent}</td><td>${r.reviewer}</td>
+      <td style="font-weight:600;color:${r.hasFatal?'var(--red)':r.total>=80?'var(--green)':'var(--amber)'}">${r.hasFatal?'红线':r.total}</td>
+      <td>${r.demand??'—'}</td><td>${r.structure??'—'}</td><td>${r.language??'—'}</td><td>${r.tools??'—'}</td>
+      <td>${r.hasFatal?'⚠️':'✓'}</td><td style="color:var(--text-sec)">${r.date}</td>
+    </tr>`
+  ).join('');
+}
+
+function exportCSV() {
+  const records = loadRecords();
+  if (!records.length) { alert('暂无数据可导出'); return; }
+  const header = 'Ticket ID,客服,评审员,总分,业务准确,邮件结构,语言规范,工具合规,红线触发,日期,备注\n';
+  const rows = records.map(r =>
+    [r.id, r.agent, r.reviewer, r.hasFatal?'红线':r.total, r.demand, r.structure, r.language, r.tools, r.hasFatal?'是':'否', r.date, (r.note||'').replace(/,/g,'；')].join(',')
+  ).join('\n');
+  const blob = new Blob(['\uFEFF'+header+rows], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'lovart_qa_' + new Date().toLocaleDateString('zh-CN').replace(/\//g,'-') + '.csv';
+  a.click();
+}
+
+// ── PASSWORD ──
+const QA_PASSWORD = 'lovartqa2026';
+const PW_KEY = 'lovart_qa_auth';
+
+function checkPassword() {
+  const val = document.getElementById('pw-input').value;
+  if (val === QA_PASSWORD) {
+    sessionStorage.setItem(PW_KEY, '1');
+    document.getElementById('pw-screen').style.display = 'none';
+    document.getElementById('main-shell').style.display = 'flex';
+    resetForm();
+  } else {
+    const err = document.getElementById('pw-error');
+    err.textContent = '密码错误，请重试';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+    setTimeout(() => err.textContent = '', 2500);
+  }
+}
+
+// Auto-unlock if already authenticated this session
+if (sessionStorage.getItem(PW_KEY) === '1') {
+  document.getElementById('pw-screen').style.display = 'none';
+  document.getElementById('main-shell').style.display = 'flex';
+  resetForm();
+} else {
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+</script>
+</body>
+</html>
